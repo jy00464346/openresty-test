@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-echo xiaoxue|sudo -S openresty -s reload
+echo xxxx| sudo -S openresty -s reload
