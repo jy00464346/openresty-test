@@ -20,7 +20,11 @@ local conf = {}
 conf.path = "logs/test.log"
 local logger
 
-local function entry_handle(buffer, entries)
+local function data_handle(entry)
+    return entry.. "data_handle"
+end
+
+local function entry_handle( entries)
     local logs = ''
     for i = 1, #entries do
         logs = logs .. entries[i] .. "\n"
@@ -38,7 +42,8 @@ function _M.handle(self)
     end
     if not buffer then
         buffer = b.new({
-            entry_handle = entry_handle
+            entry_handle = entry_handle,
+            data_handle=data_handle
         })
     end
     update()

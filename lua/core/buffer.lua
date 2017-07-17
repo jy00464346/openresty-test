@@ -110,7 +110,7 @@ function _M:flush()
             bytes = bytes + s
         end
     end]]
-    local result, ok, err = pcall(self.entry_handle, self, entries)
+    local result, ok, err = pcall(self.entry_handle, entries)
     if not result or not ok then
         nlog(ERR, "buffer entry handle failed :", result and err or ok)
     end
