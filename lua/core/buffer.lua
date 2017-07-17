@@ -4,16 +4,18 @@ local setmetatable = setmetatable
 local timer_at = ngx.timer.at
 local nlog = ngx.log
 local remove = table.remove
+--local huge = math.huge
 local type = type
 local now = ngx.now
 local ERR = ngx.ERR
 local pcall = pcall
+local update_time = ngx.update_time
 
 
-local def_buffer_max_bytes = 200 * 1024 * 1024 --200m
+local def_buffer_max_bytes = 200 * 1024 * 1024 --200m TODO bytes limit
 local def_buffer_max_size = 10000
 local def_flush_interval = 100 -- ms
-local def_batch_sizie = 1000 -- 1000 or 100ms flush buffer
+local def_batch_sizie = 2000 -- 1000 or 100ms flush buffer
 
 local _M = {}
 
@@ -32,6 +34,27 @@ local _flush = function(premature, self)
     end
 end
 
+local _flush_checker
+_flush_checker = function(premature, self)
+    if premature then return end
+    if now_time() - self.last_flush >= self.flush_interval and self.buffer_size > 0 then
+        local f_size = #self.flush_entries
+        self.flush_entries[f_size + 1] = self.entries
+        self.entries = {}
+        --        nlog(ERR, "flush by timer ...", "buffer_size=", self.buffer_size, ",c_size=", idx, ",last_flush=", self.last_flush)
+        local ok, err = timer_at(0, _flush, self)
+        if not ok then
+            nlog(ERR, "failed to create flush timer: ", err)
+            return ok, err
+        end
+    end
+    local ok, err = timer_at(self.flush_interval / 1000, _flush_checker, self)
+    if not ok then
+        nlog(ERR, "failed to create flush checker timer: ", err)
+        return ok, err
+    end
+end
+
 function _M.new(conf)
     local conf = conf or {}
     if not conf.entry_handle or type(conf.entry_handle) ~= "function" then
@@ -46,18 +69,30 @@ function _M.new(conf)
         flush_interval = conf.flush_interval or def_flush_interval,
         batch_size = conf.batch_sizie or def_batch_sizie,
         buffer_bytes = 0,
+        buffer_size = 0,
         entries = {},
-        last_flush = 0,
+        flush_entries = {},
+        last_flush = now_time(),
         data_handle = conf.data_handle, -- data handle
         entry_handle = conf.entry_handle -- buffer handle
     }
-    return setmetatable(buffer, _mt)
+    local m = setmetatable(buffer, _mt)
+    local ok, err = timer_at(m.flush_interval / 1000, _flush_checker, m)
+    if not ok then
+        nlog(ERR, "failed to create flush checker timer: ", err)
+        return ok, err
+    end
+    return m
 end
 
 function _M:flush()
-    local entries = {}
-    local size = #self.entries < self.batch_size and #self.entries or self.batch_size
+    local size = #self.flush_entries
     if size == 0 then
+        return true
+    end
+    local entries = remove(self.flush_entries, 1)
+    local f_size = #entries
+    if f_size == 0 then
         return true
     end
     --[[local bytes = 0
@@ -75,19 +110,21 @@ function _M:flush()
             bytes = bytes + s
         end
     end]]
-    local result, ok, err = pcall(self.entry_handle, self, self.entries)
+    local result, ok, err = pcall(self.entry_handle, self, entries)
     if not result or not ok then
         nlog(ERR, "buffer entry handle failed :", result and err or ok)
     end
---    self.buffer_bytes = self.buffer_bytes - bytes
-    self.entries = {}
+    --    self.buffer_bytes = self.buffer_bytes - bytes
+    self.buffer_size = self.buffer_size - f_size
     self.last_flush = now_time()
+    --    nlog(ERR, "buffer flush end :", self.buffer_size, ",", self.last_flush)
     return true
 end
 
 function _M:add_entry(...)
+    local buffer_size = self.buffer_size
     local c_size = #self.entries
-    if c_size >= self.buffer_max_size then
+    if buffer_size >= self.buffer_max_size then
         local err = "buffer overflow max size is " .. self.buffer_max_size
         nlog(ERR, err)
         return nil, err
@@ -103,7 +140,12 @@ function _M:add_entry(...)
         entry = ok
     end
     self.entries[idx] = entry or ...
-    if idx >= self.batch_size or now_time() - self.last_flush >= self.flush_interval then
+    self.buffer_size = buffer_size + 1
+    if idx >= self.batch_size then
+        local f_size = #self.flush_entries
+        self.flush_entries[f_size + 1] = self.entries
+        self.entries = {}
+        --        nlog(ERR, "flush by timer ...", "buffer_size=", self.buffer_size, ",c_size=", idx, ",last_flush=", self.last_flush)
         local ok, err = timer_at(0, _flush, self)
         if not ok then
             nlog(ERR, "failed to create flush timer: ", err)
