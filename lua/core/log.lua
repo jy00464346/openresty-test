@@ -31,6 +31,7 @@ local function entry_handle(entries)
         logs = logs .. entries[i] .. "\n"
     end
     logger:log(logs)
+    return true
 end
 
 local buffer
