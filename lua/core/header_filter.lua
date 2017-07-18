@@ -12,7 +12,7 @@ _M._NAME = "header_filter"
 
 
 function _M.handle(self)
-    ngx.log(ngx.ERR, "header_filter...")
+--    ngx.log(ngx.ERR, "header_filter...")
 --    ngx.say('header_filter...')
 end
 

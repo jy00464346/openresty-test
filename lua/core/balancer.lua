@@ -13,7 +13,7 @@ _M._NAME = "balancer"
 
 
 function _M.handle(self)
-    ngx.log(ngx.ERR, 'blancer...',ngx.ctx.balance_uri)
+--    ngx.log(ngx.ERR, 'blancer...',ngx.ctx.balance_uri)
     local ok, err = bls.set_current_peer('127.0.0.1', 81);
     if not ok then
         ngx.log(ngx.ERR, "[balancer] failed to set the current peer: ", err)

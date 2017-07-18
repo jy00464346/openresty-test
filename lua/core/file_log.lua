@@ -5,12 +5,11 @@
 --
 
 local ffi = require "ffi"
-local cjson = require "cjson"
+--local cjson = require "cjson"
 
-local now = ngx.now
-local update = ngx.update_time
 local nlog = ngx.log
 local ERR = ngx.ERR
+local setmetatable = setmetatable
 
 local O_CREAT = 0x0200
 local O_WRONLY = 0x0001
@@ -60,10 +59,6 @@ function _M:log(message)
         end
     end
     ffi.C.write(fd, message, #message)
-    if times >= 3 then
-        nlog(ERR, "end ..." .. now())
-    end
 end
-
 
 return _M

@@ -11,7 +11,7 @@ _M._NAME = "rewrite"
 
 
 function _M.handle(self)
-    ngx.log(ngx.ERR, 'rewrite...')
+--    ngx.log(ngx.ERR, 'rewrite...')
 end
 
 
