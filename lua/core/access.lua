@@ -11,7 +11,7 @@ _M._NAME = "access"
 
 function _M.handle(self)
     ngx.ctx.balance_uri = ngx.var.uri
---    ngx.log(ngx.ERR, 'access...')
+    ngx.log(ngx.ERR, 'access...')
 end
 
 return _M

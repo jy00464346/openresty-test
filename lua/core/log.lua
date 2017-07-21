@@ -4,6 +4,7 @@
 -- Comm: 
 --
 local ngx = ngx
+local tonumber = tonumber
 
 local logger_m = require "core.file_log"
 local b = require "core.buffer"
@@ -49,6 +50,18 @@ function _M.handle(self)
             data_handle = data_handle
         })
     end
+    ngx.log(ngx.ERR,"bytes_sent=", ngx.var.bytes_sent)
+    ngx.log(ngx.ERR,"body_bytes_sent=", ngx.var.body_bytes_sent)
+    local current = tonumber(ngx.var.connections_active) --包括读、写和空闲连接数
+    local active  = ngx.var.connections_reading + ngx.var.connections_writing
+    local idle    = tonumber(ngx.var.connections_waiting)
+    local writing = tonumber(ngx.var.connections_writing)
+    local reading = tonumber(ngx.var.connections_reading)
+    ngx.log(ngx.ERR,'current=',current)
+    ngx.log(ngx.ERR,'active=',active)
+    ngx.log(ngx.ERR,'idle=',idle)
+    ngx.log(ngx.ERR,'writing=',writing)
+    ngx.log(ngx.ERR,'reading=',reading)
     --    update()
     --    local b = now()
     --    ngx.log(ngx.ERR, "begin ....", b)

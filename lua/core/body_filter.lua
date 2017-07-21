@@ -12,9 +12,9 @@ _M._NAME = "body_filter"
 
 
 function _M.handle(self)
-    --    ngx.arg[1] = 'hello world\n'
-    --    ngx.arg[2] = true
---    ngx.log(ngx.ERR, 'body_filter...', ngx.var.uri, ngx.arg[1])
+--        ngx.arg[1] = 'hello world\n'
+--        ngx.arg[2] = true
+    ngx.log(ngx.ERR, 'body_filter...', ngx.var.uri,'|', ngx.arg[1])
 end
 
 

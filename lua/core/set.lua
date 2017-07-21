@@ -12,7 +12,7 @@ _M._NAME = "set"
 
 
 function _M.handle(self)
---    ngx.log(ngx.ERR, 'set...')
+    ngx.log(ngx.ERR, 'set...')
 --    ngx.say('set...')
 end
 
